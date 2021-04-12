@@ -24,4 +24,4 @@ yarn lint
 See [Configuration Reference](https://cli.vuejs.org/config/).
 
 ### Link after deploy with firebase hosting
-(https://app-chat-firebase-4ae04.web.app/login).
+(https://app-chat-firebase-4ae04.web.app/).
