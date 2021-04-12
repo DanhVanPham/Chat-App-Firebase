@@ -160,4 +160,53 @@ p.link-create a {
   text-decoration: none;
   color: #6c63ff;
 }
+
+@media screen and (max-width: 750px) {
+  .form-container {
+    position: relative;
+  }
+  .form-container .form {
+    position: absolute;
+    top: 0;
+    margin-top: 10px;
+  }
+  .form-container .title {
+    font-weight: 600;
+    font-size: 32px;
+  }
+  .form-container .button-login {
+    height: 32px;
+    font-size: 14px;
+  }
+}
+
+@media screen and (max-width: 450px) {
+  .form-container .form {
+    width: 300px;
+  }
+  .form-container .title {
+    font-weight: 600;
+    font-size: 28px;
+  }
+  .form-container .button-login {
+    height: 30px;
+    font-size: 14px;
+    margin-top: 0px;
+  }
+  .form-container .button-login:hover {
+    background: black;
+    color: white;
+  }
+  .button-google {
+    margin-left: 0%;
+  }
+}
+@media screen and (max-width: 300px) {
+  .form-container .form {
+    width: 250px;
+  }
+  .button-google {
+    margin-left: -24px;
+  }
+}
 </style>

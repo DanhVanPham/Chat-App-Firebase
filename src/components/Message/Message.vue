@@ -12,7 +12,13 @@
       </div>
     </div>
     <div class="message right" v-else>
-      <img :src="message.photoUrl" width="30" height="30" alt="user" />
+      <img
+        :src="message.photoUrl"
+        width="30"
+        height="30"
+        alt="user"
+        class="image"
+      />
       <div class="display">
         <div class="display-name right">
           {{ this.message.displayName }}
@@ -66,8 +72,19 @@ export default {
 }
 
 .message-wrapper .message.right img {
-  display: none;
+  border-radius: 50%;
+  margin-top: 6px;
+  margin-left: 8px;
 }
+
+.message-wrapper .message.right .image {
+  order: 2;
+}
+
+.message-wrapper .message.right .display {
+  order: 1;
+}
+
 .message-wrapper .message.left img {
   border-radius: 50%;
 }
@@ -102,5 +119,10 @@ export default {
   border-bottom-right-radius: 6px;
   border-top-left-radius: 32px;
   border-bottom-left-radius: 32px;
+}
+@media screen and (max-width: 500px) {
+  .message-wrapper .message.right img {
+    display: none;
+  }
 }
 </style>

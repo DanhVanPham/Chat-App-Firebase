@@ -76,4 +76,17 @@ export default {
 .input-field .input ::placeholder {
   padding-left: 16px;
 }
+@media screen and (max-width: 750px) {
+  .input-field h5 {
+    margin-top: 0px;
+    font-size: 17px;
+  }
+  .input-field .input {
+    height: 30px;
+    margin-bottom: 8px;
+  }
+}
+
+@media screen and (max-width: 450px) {
+}
 </style>

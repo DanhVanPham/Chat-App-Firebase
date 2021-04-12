@@ -50,6 +50,9 @@ export default {
     message: "",
     db: firebase.firestore(),
   }),
+  updated: function () {
+    this.$refs["scrollable"].scrollIntoView({ behavior: "smooth" });
+  },
   methods: {
     signOut() {
       firebase
@@ -128,17 +131,18 @@ export default {
   margin-left: 62%;
   background: rgba(0, 222, 252, 0.952);
   color: white;
-  padding-top: 10px;
-  padding-bottom: 10px;
+  padding-top: 4px;
+  padding-bottom: 4px;
   padding-right: 5px;
   padding-left: 5px;
   border-radius: 32px;
+
   cursor: pointer;
 }
 
 .chat-box-header .sign-out:hover {
-  background: rgba(255, 255, 255, 0.952);
-  color: black;
+  background: black;
+  color: white;
 }
 
 .chat-box-header h6 {
@@ -229,5 +233,109 @@ export default {
     color-stop(0.5, transparent),
     to(transparent)
   );
+}
+
+@media screen and (max-width: 780px) {
+  .chat-box {
+    width: 100vw;
+    margin-top: 0px;
+    border-radius: 0px;
+  }
+  .chat-box-message {
+    height: 81.5vh;
+    overflow: auto;
+  }
+
+  .chat-box-input {
+    height: 8vh;
+    border-radius: 0px;
+  }
+
+  .input-field {
+    position: relative;
+    width: 92%;
+    float: left;
+  }
+
+  /* .chat-box-header .sign-out {
+    margin-left: 52%;
+    cursor: pointer;
+  } */
+
+  .icon {
+    margin-left: 15px;
+    width: 30px;
+  }
+}
+
+@media screen and (max-width: 725px) {
+  .chat-box-header .sign-out {
+    margin-left: 58%;
+  }
+}
+
+@media screen and (max-width: 640px) {
+  .chat-box-header .sign-out {
+    margin-left: 54%;
+  }
+}
+
+@media screen and (max-width: 605px) {
+  .chat-box-header .sign-out {
+    margin-left: 46%;
+  }
+}
+
+@media screen and (max-width: 560px) {
+  .input-field {
+    width: 88%;
+  }
+
+  .input-field .input {
+    height: 32px;
+  }
+  .icon {
+    margin-left: 16px;
+  }
+
+  .icon img {
+    width: 20px;
+    height: 20px;
+  }
+
+  .icon img:hover {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+@media screen and (max-width: 500px) {
+  .chat-box-header .sign-out {
+    margin-left: 40%;
+  }
+}
+
+@media screen and (max-width: 460px) {
+  .chat-box-header .sign-out {
+    margin-left: 32%;
+  }
+}
+@media screen and (max-width: 420px) {
+  .chat-box-header .sign-out {
+    margin-left: 24%;
+  }
+  .input-field {
+    width: 85%;
+  }
+}
+@media screen and (max-width: 310px) {
+  .input-field {
+    width: 80%;
+  }
+}
+@media screen and (max-width: 250px) {
+  .chat-box-header .sign-out {
+    margin-left: 2px;
+  }
 }
 </style>
