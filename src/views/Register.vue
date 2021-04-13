@@ -2,6 +2,9 @@
   <div class="form-container">
     <form class="form">
       <h1 class="title">Register Account</h1>
+      <div class="show-image">
+        <img :src="this.photoUrl" alt="image-user" />
+      </div>
       <InputField
         :type="`text`"
         :name="`input name`"
@@ -61,6 +64,8 @@ export default {
       username: "",
       password: "",
       confirmPassword: "",
+      photoUrl:
+        "https://gravatar.com/avatar/5adc5ab6ae861c87e576946e9e521675?s=400&d=robohash&r=x",
     };
   },
   methods: {
@@ -79,8 +84,7 @@ export default {
                 id: res.user.uid,
                 email: this.username,
                 password: this.password,
-                URL:
-                  "https://gravatar.com/avatar/5adc5ab6ae861c87e576946e9e521675?s=400&d=robohash&r=x",
+                URL: this.photoUrl,
                 status: false,
               })
               .then(() => {
@@ -119,6 +123,19 @@ export default {
   top: 30%;
   left: 50%;
   transform: translate(-50%, -30%);
+}
+.form-container .form .show-image {
+  width: 150px;
+  height: 150px;
+  display: block;
+  margin: 0 auto;
+  border: 1px solid #3ac9f5;
+}
+.form-container .form .show-image img {
+  width: 150px;
+  height: 150px;
+  position: relative;
+  padding: 10px;
 }
 .form-container .title {
   text-align: center;
