@@ -2,6 +2,9 @@
   <div class="form-container">
     <form class="form">
       <h1 class="title">Register Account</h1>
+      <div class="show-image">
+        <img :src="this.photoUrl" alt="image-user" />
+      </div>
       <InputField
         :type="`text`"
         :name="`input name`"
@@ -35,6 +38,19 @@
         :value="confirmPassword"
         @input="confirmPassword = $event"
       />
+      <div class="input-container">
+        <div class="input-icon"><i class="fa fa-picture-o"></i></div>
+        <div class="input-field">
+          <h5>Image</h5>
+          <input
+            type="file"
+            placeholder="Image"
+            name="input gmail"
+            class="input gmail"
+            @change="changeAvatar"
+          />
+        </div>
+      </div>
       <button
         type="submit"
         class="button-login"
@@ -53,6 +69,7 @@
 import InputField from "../components/InputField/InputField.vue";
 import firebase from "../services/firebase";
 import Vue from "vue";
+import moment from "moment";
 export default {
   components: { InputField },
   data: () => {
@@ -61,6 +78,9 @@ export default {
       username: "",
       password: "",
       confirmPassword: "",
+      photoUrl:
+        "https://gravatar.com/avatar/5adc5ab6ae861c87e576946e9e521675?s=400&d=robohash&r=x",
+      newPhoto: "",
     };
   },
   methods: {
@@ -79,8 +99,7 @@ export default {
                 id: res.user.uid,
                 email: this.username,
                 password: this.password,
-                URL:
-                  "https://gravatar.com/avatar/5adc5ab6ae861c87e576946e9e521675?s=400&d=robohash&r=x",
+                URL: this.photoUrl,
                 status: false,
               })
               .then(() => {
@@ -104,6 +123,42 @@ export default {
           .goAway(2000);
       }
     },
+    changeAvatar(event) {
+      if (event.target.files && event.target.files[0]) {
+        const fileType = event.target.files[0].type.toString();
+        if (fileType.indexOf("image") != 0) {
+          Vue.toasted.show("Please choose an image").goAway(1500);
+          return;
+        }
+        this.newPhoto = event.target.files[0];
+        this.photoUrl = URL.createObjectURL(event.target.files[0]);
+        this.uploadAvatar();
+      } else {
+        Vue.toasted.show("Something went wrong!").goAway(1500);
+      }
+    },
+    uploadAvatar() {
+      if (this.newPhoto) {
+        const upload = firebase
+          .storage()
+          .ref()
+          .child(moment().valueOf().toString())
+          .put(this.newPhoto);
+        upload.on(
+          "state_changed",
+          null,
+          (err) => {
+            console.log("error", err.message);
+          },
+          () => {
+            upload.snapshot.ref.getDownloadURL().then((url) => {
+              console.log(url);
+              this.photoUrl = url;
+            });
+          }
+        );
+      }
+    },
   },
 };
 </script>
@@ -119,6 +174,19 @@ export default {
   top: 30%;
   left: 50%;
   transform: translate(-50%, -30%);
+}
+.form-container .form .show-image {
+  width: 150px;
+  height: 150px;
+  display: block;
+  margin: 0 auto;
+  border: 1px solid #3ac9f5;
+}
+.form-container .form .show-image img {
+  width: 150px;
+  height: 150px;
+  position: relative;
+  padding: 10px;
 }
 .form-container .title {
   text-align: center;
@@ -154,5 +222,54 @@ p.link-create {
 p.link-create a {
   text-decoration: none;
   color: #6c63ff;
+}
+.input-container {
+  position: relative;
+  display: grid;
+  grid-auto-columns: 7% 93%;
+  margin: 25px 0;
+  padding: 5px 0;
+  border-bottom: 2px solid #e4e1e1;
+}
+.input-icon {
+  grid-column: 1;
+  justify-content: center;
+  align-items: center;
+}
+.input-field {
+  position: relative;
+  grid-column: 2;
+}
+.input-field h5 {
+  margin-top: 1px;
+  font-family: "Arsenal", sans-serif;
+}
+.input-field .input {
+  width: 88%;
+  height: 36px;
+  border: none;
+  border-radius: 18px;
+  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+  outline: none;
+  padding-left: 10px;
+  transition: 0.5s ease-in-out;
+  margin-bottom: 10px;
+}
+.input-field .input:focus {
+  width: 92%;
+  box-shadow: 0px 2px 8px rgba(13, 227, 255, 0.952);
+}
+.input-field .input ::placeholder {
+  padding-left: 16px;
+}
+@media screen and (max-width: 750px) {
+  .input-field h5 {
+    margin-top: 0px;
+    font-size: 17px;
+  }
+  .input-field .input {
+    height: 30px;
+    margin-bottom: 8px;
+  }
 }
 </style>
