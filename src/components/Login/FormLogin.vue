@@ -20,6 +20,7 @@
         :value="password"
         @input="password = $event"
       />
+
       <button
         type="submit"
         class="button-login"
@@ -27,13 +28,12 @@
       >
         Login
       </button>
-      <div style="text-align: center">OR</div>
-      <div class="row button-google">
+      <!-- <div style="text-align: center">OR</div> -->
+      <!-- <div class="row button-google">
         <div class="col-md-3">
           <button
             class="btn btn-outline-dark button-login-google"
             role="button"
-            @click="loginWithGoogleSubmit($event)"
             style="text-transform: none"
           >
             <img
@@ -45,7 +45,7 @@
             Login with Google
           </button>
         </div>
-      </div>
+      </div> -->
       <div style="margin-top: 25px" class="pagination" />
       <p class="link-create">
         Don't have account? <a :href="`/signupPage`">Register Here</a>
@@ -56,29 +56,68 @@
 
 <script>
 import InputField from "../InputField/InputField.vue";
-import firebase from "firebase";
+import firebase from "../../services/firebase";
+import Vue from "vue";
 export default {
   components: { InputField },
   data: () => ({
+    db: firebase.firestore(),
     username: "",
     password: "",
+    user: "",
   }),
   methods: {
     loginWithGmail(event) {
       event.preventDefault();
-      firebase
-        .auth()
+      const auth = firebase.auth();
+      auth
         .signInWithEmailAndPassword(this.username, this.password)
-        .then((userCredential) => {
-          // Signed in
-          var user = userCredential.user;
-          console.log(user);
+        .then(async (res) => {
+          const user = res.user;
+          if (user) {
+            await this.db
+              .collection("users")
+              .where("id", "==", user.uid)
+              .get()
+              .then(async (querySnapshot) => {
+                await querySnapshot.forEach(async (doc) => {
+                  this.findUser = doc.data();
+                  localStorage.setItem("FirebaseDocumentId", doc.id);
+                });
+                localStorage.setItem("userUID", this.findUser.id);
+                localStorage.setItem("displayName", this.findUser.name);
+                localStorage.setItem("photoUrl", this.findUser.URL);
+                localStorage.setItem("email", this.findUser.email);
+                localStorage.setItem("description", this.findUser.description);
+                await this.db
+                  .collection("users")
+                  .doc(localStorage.getItem("FirebaseDocumentId"))
+                  .update({
+                    status: true,
+                  })
+                  .then(() => {
+                    this.$router.push("/users");
+                    Vue.toasted.show("Login successfully.").goAway(2000);
+                  })
+                  .catch((error) => {
+                    console.log("Error getting documents: ", error);
+                    Vue.toasted.show("Login failed!").goAway(2000);
+                  });
+              })
+              .catch((error) => {
+                console.log("Error getting documents: ", error);
+                Vue.toasted.show("Login failed!").goAway(2000);
+              });
+            console.log(this.findUser);
+          }
+          // console.log(user);
         })
         .catch((error) => {
           console.log(error);
+          Vue.toasted.show(error.message).goAway(2000);
         });
     },
-    loginWithGoogleSubmit(event) {
+    async loginWithGoogleSubmit(event) {
       event.preventDefault();
       var provider = new firebase.auth.GoogleAuthProvider();
       firebase
@@ -87,9 +126,16 @@ export default {
         .then((userCredential) => {
           var user = userCredential.user;
           console.log(user);
-          if (this.$route.name !== "/chatPage") {
-            this.$router.push("/chatPage").catch(() => {});
-          }
+          // const userInfo = {
+          //   userUID: user.uid,
+          //   displayName: user.displayName,
+          //   photoUrl: user.photoURL,
+          //   status: true,
+          // };
+
+          // console.log(this.user === "");
+
+          // this.db.collection("users").add(userInfo);
         })
         .catch((error) => {
           // Handle Errors here.
@@ -98,6 +144,11 @@ export default {
           // ...
         });
     },
+  },
+  created() {
+    if (localStorage.getItem("userUID") !== null) {
+      this.$router.push("/users");
+    }
   },
 };
 </script>

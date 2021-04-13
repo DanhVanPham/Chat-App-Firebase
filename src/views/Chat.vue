@@ -1,18 +1,14 @@
 <template>
   <div class="chat-box">
     <div class="chat-box-header">
-      <img
-        src="https://s2.linkimage.com/images/062/62200/preview_73331.jpg"
-        alt="user"
-        class="avatar"
-      />
-      <h6>Room for public</h6>
-      <div class="sign-out" @click="signOut()">
-        <i class="fa fa-sign-out" aria-hidden="true"></i>Log out
-      </div>
+      <img :src="this.currentPeerUser.photoUrl" alt="user" class="avatar" />
+      <h6>{{ this.currentPeerUser.displayName }}</h6>
     </div>
     <div class="chat-box-message">
-      <MessageList :chatMessages="messages"></MessageList>
+      <MessageList
+        :chatMessages="this.listMessage"
+        :currentPeerUser="currentPeerUser"
+      ></MessageList>
       <div ref="scrollable"></div>
     </div>
     <div>
@@ -41,17 +37,38 @@
 
 <script>
 import MessageList from "../components/MessageList/MessageList.vue";
-import firebase from "firebase";
+import firebase from "../services/firebase";
+import moment from "moment";
+
 export default {
   components: { MessageList },
-  data: () => ({
-    user: firebase.auth().currentUser,
-    messages: [],
-    message: "",
-    db: firebase.firestore(),
-  }),
+  props: ["currentPeerUser"],
+  data: function () {
+    return {
+      messages: [],
+      message: "",
+      db: firebase.firestore(),
+      currentUserName: localStorage.getItem("displayName"),
+      currentUserPhotoUrl: localStorage.getItem("photoUrl"),
+      currentUserId: localStorage.getItem("userUID"),
+      currentUserEmail: localStorage.getItem("email"),
+      listMessage: [],
+      groupChatId: null,
+      currentUserPeerId: this.$route.params.id,
+    };
+  },
   updated: function () {
     this.$refs["scrollable"].scrollIntoView({ behavior: "smooth" });
+  },
+  watch: {
+    currentPeerUser: function (newVal, oldVal) {
+      if (newVal != oldVal) {
+        this.listMessage = [];
+        this.getMessages();
+        // this.sortByTimeStamp();
+        this.$refs["scrollable"].scrollIntoView({ behavior: "smooth" });
+      }
+    },
   },
   methods: {
     signOut() {
@@ -59,6 +76,7 @@ export default {
         .auth()
         .signOut()
         .then(() => {
+          localStorage.clear();
           if (this.$route.name !== "/login") {
             this.$router.push("/login").catch(() => {});
           }
@@ -70,34 +88,124 @@ export default {
     },
     async sendMessage(event) {
       event.preventDefault();
-      console.log(this.message);
+      const timeStamp = moment().valueOf().toString();
+      var date = new Date();
       const messageInfomation = {
-        userUID: this.user.uid,
-        displayName: this.user.displayName,
-        photoUrl: this.user.photoURL,
-        text: this.message,
-        createAt: Date.now(),
+        id: timeStamp,
+        idFrom: localStorage.getItem("userUID"),
+        idTo: this.currentPeerUser.userId,
+        photoUrl: localStorage.getItem("photoUrl"),
+        text: this.message.trim(),
+        timeStamp: timeStamp,
+        createAt:
+          [date.getMonth() + 1, date.getDate(), date.getFullYear()].join("/") +
+          " " +
+          [date.getHours(), date.getMinutes(), date.getSeconds()].join(":"),
       };
-      console.log(messageInfomation);
-      await this.db.collection("messages").add(messageInfomation);
-      this.message = "";
+      var groupChatId = `${localStorage.getItem("userUID")} + ${
+        this.currentPeerUser.userId
+      }`;
+      this.db
+        .collection("messages")
+        .doc(groupChatId)
+        .collection(groupChatId)
+        .doc(timeStamp)
+        .set(messageInfomation)
+        .then(() => {
+          this.message = "";
+          this.getMessages();
+        });
+      this.$refs["scrollable"].scrollIntoView({ behavior: "smooth" });
+    },
+    async getMessages() {
+      this.listMessage = [];
+      let groupChatId = `${localStorage.getItem("userUID")} + ${
+        this.currentPeerUser.userId
+      }`;
+      this.db
+        .collection("messages")
+        .doc(groupChatId)
+        .collection(groupChatId)
+        .onSnapshot((Snapshot) => {
+          if (Snapshot.docChanges().length > 0) {
+            Snapshot.docChanges().forEach((res) => {
+              console.log(res.doc.data());
+              this.listMessage.some(
+                (message) => message.timeStamp === res.doc.data().timeStamp
+              )
+                ? ""
+                : this.listMessage.push(res.doc.data());
+              this.listMessage.sort((itemA, itemB) => {
+                return itemA.timeStamp - itemB.timeStamp;
+              });
+            });
+          } else {
+            // console.log("call cmng 1");
+            this.groupChatId = `${this.currentUserId} + ${this.currentPeerUser.userId}`;
+            this.db
+              .collection("messages")
+              .doc(this.groupChatId)
+              .collection(this.groupChatId)
+              .onSnapshot((Snapshot) => {
+                console.log(Snapshot.docChanges());
+                Snapshot.docChanges().forEach((res) => {
+                  console.log("res", res.doc.data());
+                  if (res.type === "added") {
+                    this.listMessage.some(
+                      (message) =>
+                        message.timeStamp === res.doc.data().timeStamp
+                    )
+                      ? ""
+                      : this.listMessage.push(res.doc.data());
+                    this.listMessage.sort((itemA, itemB) => {
+                      return itemA.timeStamp - itemB.timeStamp;
+                    });
+                  }
+                });
+              });
+          }
+        });
+      groupChatId = `${this.currentPeerUser.userId} + ${localStorage.getItem(
+        "userUID"
+      )}`;
+      this.db
+        .collection("messages")
+        .doc(groupChatId)
+        .collection(groupChatId)
+        .onSnapshot((Snapshot) => {
+          if (Snapshot.docChanges().length > 0) {
+            this.groupChatId = groupChatId;
+            console.log(Snapshot.docChanges());
+            Snapshot.docChanges().forEach((res) => {
+              this.listMessage.some(
+                (message) => message.timeStamp === res.doc.data().timeStamp
+              )
+                ? ""
+                : this.listMessage.push(res.doc.data());
+              this.listMessage.sort((itemA, itemB) => {
+                return itemA.timeStamp - itemB.timeStamp;
+              });
+            });
+          }
+        });
       this.$refs["scrollable"].scrollIntoView({ behavior: "smooth" });
     },
   },
   mounted() {
-    this.db
-      .collection("messages")
-      .orderBy("createAt")
-      .onSnapshot((querySnap) => {
-        this.messages = querySnap.docs.map((doc) => doc.data());
-      });
+    this.listMessage = [];
+    this.getMessages();
+  },
+  created() {
+    if (localStorage.getItem("userUID") === null) {
+      this.$router.push("/login");
+    }
   },
 };
 </script>
 
 <style scoped>
 .chat-box {
-  width: 800px;
+  /* width: 800px; */
   margin: 0 auto;
   background: rgb(252, 251, 251);
   margin-top: 10px;
@@ -127,31 +235,13 @@ export default {
   margin-right: 10px;
 }
 
-.chat-box-header .sign-out {
-  margin-left: 62%;
-  background: rgba(0, 222, 252, 0.952);
-  color: white;
-  padding-top: 4px;
-  padding-bottom: 4px;
-  padding-right: 5px;
-  padding-left: 5px;
-  border-radius: 32px;
-
-  cursor: pointer;
-}
-
-.chat-box-header .sign-out:hover {
-  background: black;
-  color: white;
-}
-
 .chat-box-header h6 {
   font-size: 20px;
   margin-left: 5px;
 }
 
 .chat-box-message {
-  height: 80vh;
+  height: 71.5vh;
   overflow: auto;
 }
 
@@ -160,12 +250,11 @@ export default {
   align-items: center;
   background-color: rgb(216, 220, 226);
   border-bottom-right-radius: 16px;
-  border-bottom-left-radius: 16px;
 }
 
 .input-field {
   position: relative;
-  width: 91%;
+  width: 90%;
   float: left;
 }
 
@@ -219,7 +308,7 @@ export default {
 }
 
 .chat-box-message::-webkit-scrollbar {
-  width: 10px;
+  width: 8px;
   background-color: #f5f5f5;
 }
 
@@ -235,64 +324,98 @@ export default {
   );
 }
 
-@media screen and (max-width: 780px) {
-  .chat-box {
-    width: 100vw;
-    margin-top: 0px;
-    border-radius: 0px;
+@media screen and (max-width: 1201px) {
+  .input-field {
+    width: 88%;
   }
+}
+
+@media screen and (max-width: 1001px) {
+  .input-field {
+    width: 86%;
+  }
+}
+
+@media screen and (max-width: 860px) {
+  .input-field {
+    width: 84%;
+  }
+  .icon {
+    margin-left: 18px;
+    margin-top: 12px;
+    width: 30px;
+    height: 30px;
+  }
+
+  .icon img {
+    width: 20px;
+    height: 20px;
+  }
+
+  .icon img:hover {
+    width: 22px;
+    height: 22px;
+  }
+  .chat-box-message::-webkit-scrollbar {
+    width: 6px;
+  }
+}
+
+@media screen and (max-width: 760px) {
+  .chat-box {
+    margin: 0 auto;
+    background: rgb(252, 251, 251);
+    margin-top: 10px;
+    border-radius: 32px;
+    border-bottom-right-radius: 16px;
+    border-bottom-left-radius: 16px;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+  }
+  .chat-box-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    height: 10vh;
+    border-bottom: 1px solid #dee1e2;
+    box-sizing: border-box;
+  }
+  .chat-box-header .avatar {
+    width: 20%;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+
+  .chat-box-header h6 {
+    font-size: 20px;
+    margin-left: 5px;
+  }
+
   .chat-box-message {
-    height: 81.5vh;
+    height: 80vh;
     overflow: auto;
   }
 
   .chat-box-input {
-    height: 8vh;
+    height: 8.5vh;
+    align-items: center;
+    background-color: rgb(216, 220, 226);
     border-radius: 0px;
   }
-
-  .input-field {
-    position: relative;
-    width: 92%;
-    float: left;
-  }
-
-  /* .chat-box-header .sign-out {
-    margin-left: 52%;
-    cursor: pointer;
-  } */
-
-  .icon {
-    margin-left: 15px;
-    width: 30px;
-  }
-}
-
-@media screen and (max-width: 725px) {
-  .chat-box-header .sign-out {
-    margin-left: 58%;
-  }
-}
-
-@media screen and (max-width: 640px) {
-  .chat-box-header .sign-out {
-    margin-left: 54%;
-  }
-}
-
-@media screen and (max-width: 605px) {
-  .chat-box-header .sign-out {
-    margin-left: 46%;
-  }
-}
-
-@media screen and (max-width: 560px) {
   .input-field {
     width: 88%;
   }
+}
 
-  .input-field .input {
-    height: 32px;
+@media screen and (max-width: 550px) {
+  .input-field {
+    width: 84%;
   }
   .icon {
     margin-left: 16px;
@@ -309,33 +432,38 @@ export default {
   }
 }
 
-@media screen and (max-width: 500px) {
-  .chat-box-header .sign-out {
-    margin-left: 40%;
-  }
-}
-
 @media screen and (max-width: 460px) {
-  .chat-box-header .sign-out {
-    margin-left: 32%;
-  }
-}
-@media screen and (max-width: 420px) {
-  .chat-box-header .sign-out {
-    margin-left: 24%;
+  .chat-box-header h6 {
+    font-size: 17px;
+    margin-left: 5px;
   }
   .input-field {
-    width: 85%;
+    width: 82%;
+  }
+  .input-field .input {
+    height: 28px;
+  }
+  .icon {
+    margin-top: 8px;
+  }
+
+  .icon img {
+    width: 18px;
+    height: 18px;
+  }
+  .icon img:hover {
+    width: 20px;
+    height: 20px;
   }
 }
-@media screen and (max-width: 310px) {
+@media screen and (max-width: 350px) {
   .input-field {
     width: 80%;
   }
 }
-@media screen and (max-width: 250px) {
-  .chat-box-header .sign-out {
-    margin-left: 2px;
+@media screen and (max-width: 320px) {
+  .input-field {
+    width: 72%;
   }
 }
 </style>

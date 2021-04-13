@@ -1,10 +1,10 @@
 <template>
   <div class="message-wrapper">
-    <div class="message left" v-if="this.user.uid !== message.userUID">
+    <div class="message left" v-if="this.userId !== message.idFrom">
       <img :src="message.photoUrl" width="30" height="30" alt="user" />
       <div class="display">
         <div class="display-name left">
-          {{ this.message.displayName }}
+          {{ this.currentPeerUser.displayName }}
         </div>
         <div class="text-wrapper left">
           {{ this.message.text }}
@@ -21,7 +21,7 @@
       />
       <div class="display">
         <div class="display-name right">
-          {{ this.message.displayName }}
+          {{ this.name }}
         </div>
         <div class="text-wrapper right">
           {{ this.message.text }}
@@ -32,12 +32,13 @@
 </template>
 
 <script>
-import firebase from "firebase";
+// import firebase from "firebase";
 export default {
-  props: ["message"],
+  props: ["message", "currentPeerUser"],
   data: () => {
     return {
-      user: firebase.auth().currentUser,
+      userId: localStorage.getItem("userUID"),
+      name: localStorage.getItem("displayName"),
     };
   },
 };
@@ -57,11 +58,11 @@ export default {
   flex-direction: row;
   min-height: 40px;
   width: 80%;
+  margin-right: 10px;
+  margin-bottom: 10px;
 }
 .message-wrapper .message.right {
-  margin-right: 10px;
   float: right;
-  margin-bottom: 10px;
   justify-content: flex-end;
   align-items: flex-start;
 }
@@ -83,6 +84,11 @@ export default {
 
 .message-wrapper .message.right .display {
   order: 1;
+}
+
+.message-wrapper .message .display {
+  display: flex;
+  flex-direction: column;
 }
 
 .message-wrapper .message.left img {
@@ -123,6 +129,42 @@ export default {
 @media screen and (max-width: 500px) {
   .message-wrapper .message.right img {
     display: none;
+  }
+}
+@media screen and (max-width: 460px) {
+  .message-wrapper {
+    margin-top: 8px;
+    margin-bottom: 8px;
+    margin-left: 8px;
+  }
+
+  .message-wrapper .message {
+    min-height: 40px;
+    width: 70%;
+    margin-right: 8px;
+    margin-bottom: 8px;
+  }
+
+  .display .display-name.left {
+    font-size: 12px;
+  }
+  .text-wrapper {
+    padding: 6px;
+    padding-left: 10px;
+    font-size: 12px;
+  }
+  .text-wrapper.left {
+    background: #63676b;
+    border-top-right-radius: 28px;
+    border-bottom-right-radius: 28px;
+    border-top-left-radius: 28px;
+    border-bottom-left-radius: 6px;
+  }
+  .text-wrapper.right {
+    border-top-right-radius: 28px;
+    border-bottom-right-radius: 6px;
+    border-top-left-radius: 28px;
+    border-bottom-left-radius: 28px;
   }
 }
 </style>
