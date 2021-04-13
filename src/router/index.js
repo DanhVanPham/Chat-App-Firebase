@@ -3,6 +3,7 @@ import VueRouter from 'vue-router'
 import LoginPage from '../views/Login.vue'
 import SignupPage from '../views/Register.vue'
 import ChatPage from '../views/Chat.vue'
+import Users from '../views/User.vue'
 
 Vue.use(VueRouter)
 
@@ -22,9 +23,14 @@ const routes = [{
         component: SignupPage
     },
     {
-        path: '/chatPage',
+        path: '/chatPage/:id',
         name: 'chatPage',
         component: ChatPage,
+    },
+    {
+        path: '/users',
+        name: 'users',
+        component: Users,
     }
 ]
 

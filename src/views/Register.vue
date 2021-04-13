@@ -4,6 +4,14 @@
       <h1 class="title">Register Account</h1>
       <InputField
         :type="`text`"
+        :name="`input name`"
+        :label="`Name`"
+        :icon="`fa fa-user`"
+        :placeHolder="`Name`"
+        @input="name = $event"
+      />
+      <InputField
+        :type="`text`"
         :name="`input gmail`"
         :label="`Gmail`"
         :icon="`fa fa-envelope`"
@@ -17,6 +25,15 @@
         :icon="`fa fa-key`"
         :placeHolder="`Password`"
         @input="password = $event"
+      />
+      <InputField
+        :type="`password`"
+        :name="`input password`"
+        :label="`Confirm password`"
+        :icon="`fa fa-check`"
+        :placeHolder="`Input confirm password ...`"
+        :value="confirmPassword"
+        @input="confirmPassword = $event"
       />
       <button
         type="submit"
@@ -34,27 +51,59 @@
 
 <script>
 import InputField from "../components/InputField/InputField.vue";
-import firebase from "firebase";
+import firebase from "../services/firebase";
+import Vue from "vue";
 export default {
   components: { InputField },
   data: () => {
     return {
+      name: "",
       username: "",
       password: "",
+      confirmPassword: "",
     };
   },
   methods: {
     registerAccount(event) {
       event.preventDefault();
-      firebase
-        .auth()
-        .createUserWithEmailAndPassword(this.username, this.password)
-        .then(() => {
-          this.$router.push("/login").catch(() => {});
-        })
-        .catch((error) => {
-          console.log(error);
-        });
+      if (this.password === this.confirmPassword) {
+        const auth = firebase.auth();
+        auth
+          .createUserWithEmailAndPassword(this.username, this.password)
+          .then(async (res) => {
+            await firebase
+              .firestore()
+              .collection("users")
+              .add({
+                name: this.name,
+                id: res.user.uid,
+                email: this.username,
+                password: this.password,
+                URL:
+                  "https://gravatar.com/avatar/5adc5ab6ae861c87e576946e9e521675?s=400&d=robohash&r=x",
+                description: "",
+                status: false,
+              })
+              .then(() => {
+                this.name = "";
+                this.username = "";
+                this.password = "";
+                Vue.toasted.show("Sign up account successful.").goAway(1500);
+                this.$router.push("/login");
+              });
+          })
+          .catch((error) => {
+            if (error.code === "auth/weak-password") {
+              Vue.toasted.show("Required input strong password!").goAway(1500);
+            } else if (error.code === "auth/email-already-in-use") {
+              Vue.toasted.show("Email already regitered!").goAway(1500);
+            }
+          });
+      } else {
+        Vue.toasted
+          .show("Password and cofirm password must be match!")
+          .goAway(2000);
+      }
     },
   },
 };
