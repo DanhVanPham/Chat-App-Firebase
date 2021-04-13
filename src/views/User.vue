@@ -3,11 +3,12 @@
     <div class="current-user">
       <div class="header-form-user">
         <div class="image-my-self">
-          <img
-            :src="this.currentUserPhotoUrl"
-            alt="avatar"
-            class="avatar-my-self"
-          />
+          <router-link to="/profile"
+            ><img
+              :src="this.currentUserPhotoUrl"
+              alt="avatar"
+              class="avatar-my-self"
+          /></router-link>
         </div>
         <div class="display-name-my-self">
           <div class="name-my-self">{{ this.currentUserName }}</div>
@@ -193,6 +194,10 @@ export default {
   justify-content: space-between;
 }
 
+.list-user-container .current-user .header-form-user .image-my-self {
+  cursor: pointer;
+}
+
 .list-user-container
   .current-user
   .header-form-user
@@ -295,7 +300,7 @@ export default {
 }
 .user-container .current-user-image img {
   border-radius: 50%;
-  widows: 36px;
+  width: 38px;
   height: 36px;
 }
 .user-container .display-name-user {

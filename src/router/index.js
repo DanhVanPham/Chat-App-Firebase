@@ -4,6 +4,7 @@ import LoginPage from '../views/Login.vue'
 import SignupPage from '../views/Register.vue'
 import ChatPage from '../views/Chat.vue'
 import Users from '../views/User.vue'
+import Profile from '../views/Profile.vue'
 
 Vue.use(VueRouter)
 
@@ -31,6 +32,11 @@ const routes = [{
         path: '/users',
         name: 'users',
         component: Users,
+    },
+    {
+        path: '/profile',
+        name: 'profile',
+        component: Profile,
     }
 ]
 
