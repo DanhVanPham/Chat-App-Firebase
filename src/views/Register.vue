@@ -81,7 +81,6 @@ export default {
                 password: this.password,
                 URL:
                   "https://gravatar.com/avatar/5adc5ab6ae861c87e576946e9e521675?s=400&d=robohash&r=x",
-                description: "",
                 status: false,
               })
               .then(() => {
